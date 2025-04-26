@@ -7,18 +7,17 @@ export default function App() {
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [region, setRegion] = useState<Region | null>(null);
     const [loading, setLoading] = useState(true);
+    const [colectivos, setColectivos] = useState([])
 
     useEffect(() => {
       (async () => {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          alert('Permiso de ubicacion degenegado');
+          Alert.alert('Permiso denegado', 'Se necesita la ubicación para mostrar el mapa.');
           return;
         }
-
+  
         let loc = await Location.getCurrentPositionAsync({});
-        console.log('Ubicación obtenida:', loc);
-
         setLocation(loc);
         setRegion({
           latitude: loc.coords.latitude,
@@ -27,14 +26,24 @@ export default function App() {
           longitudeDelta: 0.01,
         });
         setLoading(false);
-      })(); //Esto permite la ejecucion del async
-    }, [])
+      })();
+  
+      const fetchColectivos = async () => {
+        try {
+          const res = await fetch('https://tu-backend.onrender.com/colectivos');
+          const data = await res.json();
+          setColectivos(data);
+          console.log(data)
+        } catch (err) {
+          console.error('Error al traer colectivos:', err);
+        }
+      };
+  
+      fetchColectivos();
+      const interval = setInterval(fetchColectivos, 5000); // Cada 5s
+      return () => clearInterval(interval);
+    }, []);
 
-    const colectivosSimulados = [
-      { id: 1, lat: -34.6037, lng: -58.3816 }, // Obelisco
-      { id: 2, lat: -34.6091, lng: -58.3923 }, // Congreso
-      { id: 3, lat: -34.6012, lng: -58.3841 }, // Teatro Colón
-    ];
 
     if (loading || !region) {
       return (
@@ -46,35 +55,32 @@ export default function App() {
 
     return (
       <View style={styles.container}>
-      <MapView style={styles.map} region={region} showsUserLocation>
-        {colectivosSimulados.map(colectivo => (
+        <MapView style={{ flex: 1 }} region={region}>
+          {colectivos.map(colectivo => (
           <Marker
             key={colectivo.id}
             coordinate={{ latitude: colectivo.lat, longitude: colectivo.lng }}
             title={`Colectivo ${colectivo.id}`}
-            pinColor="blue"
           />
         ))}
-      </MapView>
+    </MapView>
     </View>
     )
 
 
-
-
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    map: {
+      width: Dimensions.get('window').width,
+      height: Dimensions.get('window').height,
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });

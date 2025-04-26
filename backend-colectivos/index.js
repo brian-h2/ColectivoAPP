@@ -24,6 +24,9 @@ app.get('/colectivos', (req, res) => {
     res.json(colectivosSimulados);
 });
 
+app.get('/', (req, res) => {
+    console.log('Servidor corriendo')
+});
 app.listen(PORT, () => {
     console.log(`Backend escuchando en puerto ${PORT}`);
 });
